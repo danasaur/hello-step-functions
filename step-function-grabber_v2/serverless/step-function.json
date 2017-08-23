@@ -1,0 +1,21 @@
+{
+  "Comment": "grabs data from an api and writes it to s3",
+  "StartAt": "GrabData",
+  "States": {
+    "GrabData": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:us-east-1:882097346209:function:grabber-lambda-stack-GetData-1NREC7WOTXYTW",
+      "Next": "ProcessData"
+    },
+    "ProcessData": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:us-east-1:882097346209:function:grabber-lambda-stack-ProcessData-HUKHU5ES4XNW",
+      "Next": "WriteToS3"
+    },
+    "WriteToS3": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:us-east-1:882097346209:function:grabber-lambda-stack-WriteData-1Y0GJFPZXC79R",
+      "End": true
+    }
+  }
+}
