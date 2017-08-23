@@ -1,9 +1,13 @@
+"""convert timezones and put into a dataframe"""
 from datetime import datetime, timedelta
 from dateutil import tz
+import pandas as pd
 
-def _convert_time(time_string):
+
+def convert_time(time_string):
     """
-    a helper function for process_data which converts the time from UTC to Minnesota time
+    a helper function for process_data which converts the time from UTC
+    to Minnesota time
     """
     from_zone = tz.gettz('UTC')
     to_zone = tz.gettz('America/Chicago')
@@ -24,19 +28,21 @@ def _convert_time(time_string):
     local_time_string = summer_local.time().strftime("%H:%M:%S")
     return local_time_string
 
+
 def process_data(event, context):
     """
     convert data to local time
     return event including a pandas data object
     """
-    time_now = datetime.now().strftime("%m_%d_%Y_%H:%M:%S")
-    sunrise = _convert_time(event['data']['results']['sunrise'])
-    sunset = _convert_time(event['data']['results']['sunset'])
+    time_now = datetime.now().strftime("%m_%d_%Y_%H-%M-%S")
+    sunrise = convert_time(event['data']['results']['sunrise'])
+    sunset = convert_time(event['data']['results']['sunset'])
 
     data_dict = {"time_now": [time_now],
                  "sunrise": [sunrise],
                  "sunset": [sunset]}
 
-    df = pd.DataFrame(data_dict)
-    event['dataframe'] = df
+    
+    event['dataframe'] = dataframe
+    event['time_now'] = time_now
     return event
