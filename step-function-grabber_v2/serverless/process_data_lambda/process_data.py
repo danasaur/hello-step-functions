@@ -1,11 +1,5 @@
 from datetime import datetime, timedelta
-import json
-import fastparquet
 from dateutil import tz
-import requests
-import pandas as pd
-import s3fs
-
 
 def _convert_time(time_string):
     """
@@ -30,18 +24,6 @@ def _convert_time(time_string):
     local_time_string = summer_local.time().strftime("%H:%M:%S")
     return local_time_string
 
-
-def get_data(event, context):
-    """
-    get data from an api endpoint
-    return event including a json data object
-    """
-    response = requests.get(
-    	"https://api.sunrise-sunset.org/json?lat=44.977753&lng=-93.265011&date=today")
-    event['data'] = json.loads(response.content)
-    return event
-
-
 def process_data(event, context):
     """
     convert data to local time
@@ -58,23 +40,3 @@ def process_data(event, context):
     df = pd.DataFrame(data_dict)
     event['dataframe'] = df
     return event
-
-
-def write_data(event, context):
-    """
-    write data to s3 in parquet format
-    """
-    df = event['dataframe']
-    time_now = datetime.now().strftime("%m_%d_%Y_%H:%M:%S")
-    s3 = s3fs.S3FileSystem()
-    s3_connection = s3.open
-    filepath = "bigdana/{0}.parq".format(time_now)
-    fastparquet.write(filepath, df, open_with=s3_connection)
-    return event
-
-if __name__ == "__main__":
-    event = {}
-    context = {}
-    event = get_data(event, context)
-    event = process_data(event, context)
-    event = write_data(event, context)
