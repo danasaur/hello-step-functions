@@ -1,2 +1,4 @@
+python-dateutil
 fastparquet
+requests
 s3fs
