@@ -19,23 +19,33 @@ run = docker run --rm -it \
 		--name=$(PROJECT)-serverless-$(ENV) $(NAME) $1
 
 build:
-	docker build -t flowers .
+	docker build --no-cache -t flowers .
 
 dev:
 	docker run -it -v `pwd`:/code flowers bash
 
 libs:
-	conda install --yes --file requirements.txt
-	mkdir -p serverless/libs
-	cp -a /opt/conda/pkgs/. /code/serverless/libs
+	conda install --yes --file /code/serverless/get_data_lambda/requirements.txt -v
+	mkdir -p serverless/get_data_lambda/libs
+	cp -a /opt/conda/pkgs/. /code/serverless/get_data_lambda/libs
 
 zip:
-	cp serverless/grabber.py /code/serverless/libs/
-	zip -r serverless/grabber-package.zip /code/serverless/libs/
+	cp /code/serverless/get_data_lambda/get_data.py /code/serverless/get_data_lambda/libs/
+	rm -rf /code/tmpdir
+	mkdir -p /code/tmpdir
+	cp -r /code/serverless/get_data_lambda/libs/* /code/tmpdir
+	cd /code/tmpdir
+	zip data.zip *
+	# zip -r9 --exclude=Dockerfile \
+	# --exclude=Makefile \
+	# --exclude=*.pyc* \
+	# --exclude=serverless \
+	# --exclude=code \
+	# /tmpdir/get_data_lambda-package.zip /tmpdir/*
 
 clean:
 	rm -rf $(LIBS_DIR)/*
-	rm serverless/grabber-package.zip
+	rm serverless/get_data_lambda/get_data_lambda-package.zip
 
 shell: check-env env-dir
 	$(call run,bash,$(ENV))
