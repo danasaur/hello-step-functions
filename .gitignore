@@ -1,2 +1,5 @@
 /step-function-grabber/serverless/libs/*
 /step-function-grabber_v2/serverless/libs/*
+/step-function-grabber_v2/serverless/get_data_lambda/build/*
+/step-function-grabber_v2/serverless/process_data_lambda/build/*
+/step-function-grabber_v2/serverless/write_data_to_csv_lambda/build/*

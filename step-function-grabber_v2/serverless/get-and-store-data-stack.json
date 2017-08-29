@@ -1,0 +1,176 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Resources": {
+
+    "GetDataRole": {
+     "Type": "AWS::IAM::Role",
+     "Properties": {
+    	"AssumeRolePolicyDocument": {
+    	   "Version" : "2012-10-17",
+    	   "Statement": [ {
+    		  "Effect": "Allow",
+    		  "Principal": {
+    			 "Service": "lambda.amazonaws.com"
+    		  },
+    		  "Action": [ "sts:AssumeRole" ]
+    	   } ]
+    	},
+    	"Path": "/"
+    	}
+    },
+
+    "ProcessDataRole": {
+     "Type": "AWS::IAM::Role",
+     "Properties": {
+      "AssumeRolePolicyDocument": {
+         "Version" : "2012-10-17",
+         "Statement": [ {
+          "Effect": "Allow",
+          "Principal": {
+           "Service": "lambda.amazonaws.com"
+          },
+          "Action": [ "sts:AssumeRole" ]
+         } ]
+      },
+      "Path": "/"
+      }
+    },
+
+    "WriteDataRole": {
+     "Type": "AWS::IAM::Role",
+     "Properties": {
+      "AssumeRolePolicyDocument": {
+         "Version" : "2012-10-17",
+         "Statement": [ {
+          "Effect": "Allow",
+          "Principal": {
+           "Service": "lambda.amazonaws.com"
+          },
+          "Action": [ "sts:AssumeRole" ]
+         } ]
+      },
+      "Path": "/",
+      "Policies": [           {
+            "PolicyName": "S3Access",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:Get*",
+                    "s3:Put*",
+                    "s3:Delete*"
+                  ],
+                  "Resource": { "Fn::Join": [ "", [ "arn:aws:s3:::", { "Ref": "DataBucket" }, "/*"  ] ] }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [ "s3:List*" ],
+                  "Resource": { "Fn::Join": [ "", [ "arn:aws:s3:::", { "Ref": "DataBucket" }  ] ] }
+                }
+              ]
+            }
+          } ]
+      }
+    },
+
+    "StateMachineRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            { 
+              "Action": [ "sts:AssumeRole" ], 
+              "Effect": "Allow", 
+              "Principal": { "Service": "states.us-east-1.amazonaws.com" } 
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "Policies": [
+          {
+            "PolicyName": "ExecuteLambda",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "lambda:InvokeFunction"
+                  ],
+                  "Resource": [
+                    { "Fn::GetAtt": [ "GetData", "Arn" ] },
+                    { "Fn::GetAtt": [ "ProcessData", "Arn" ] },
+                    { "Fn::GetAtt": [ "WriteData", "Arn" ] }
+                  ]
+                }
+              ]
+            }
+          } 
+        ]
+      }
+    }, 
+
+    "GetData": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Handler": "get_data.get_data",
+        "Role": { "Fn::GetAtt" : ["GetDataRole", "Arn"] },
+        "Code": {
+          "S3Bucket": "danas-lambdas",
+          "S3Key": "get_data_package.zip"
+        },
+        "Runtime": "python2.7",
+        "Timeout": 300,
+        "MemorySize" : 1536
+      }
+    },
+      
+    "ProcessData": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Handler": "process_data.process_data",
+        "Role": { "Fn::GetAtt" : ["ProcessDataRole", "Arn"] },
+        "Code": {
+          "S3Bucket": "danas-lambdas",
+          "S3Key": "process_data_package.zip"
+        },
+        "Runtime": "python2.7",
+        "Timeout": 300,
+        "MemorySize" : 1536
+      }
+    },
+      
+    "WriteData": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Handler": "write_data_to_csv.write_data_to_csv",
+        "Role": { "Fn::GetAtt" : ["WriteDataRole", "Arn"] },
+        "Code": {
+          "S3Bucket": "danas-lambdas",
+          "S3Key": "write_data-package.zip"
+        },
+        "Runtime": "python2.7",
+        "Timeout": 300,
+        "MemorySize" : 1536
+      }
+    },
+
+    "DataBucket": {
+      "Type": "AWS::S3::Bucket"
+    },
+
+    "StateMachine": {
+     "Type": "AWS::StepFunctions::StateMachine",
+     "Properties": {
+        "DefinitionString": { "Fn::Sub": [ "{\"Comment\": \"grabs data from an api and writes it to s3\", \"States\": {\"WriteToS3\": {\"Resource\": \"${WriteData}\", \"End\": true, \"Type\": \"Task\"}, \"GetData\": {\"Resource\": \"${GetData}\", \"Type\": \"Task\", \"Next\": \"ProcessData\"}, \"ProcessData\": {\"Resource\": \"${ProcessData}\", \"Type\": \"Task\", \"Next\": \"WriteToS3\"}}, \"StartAt\": \"GetData\"}", 
+          { "GetData": { "Fn::GetAtt": [ "GetData", "Arn" ] },
+            "ProcessData": { "Fn::GetAtt": [ "ProcessData", "Arn" ] },
+            "WriteData": { "Fn::GetAtt": [ "WriteData", "Arn" ] } }
+        ] },
+        "RoleArn": { "Fn::GetAtt": [ "StateMachineRole", "Arn" ] }
+      }
+    }
+  }
+}

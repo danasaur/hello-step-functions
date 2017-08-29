@@ -1,0 +1,8 @@
+{
+"s3_bucket_name": "bigdana",
+"data_dict": {
+    "sunset": [5],
+    "sunrise": [6]
+    },
+"time_now": "08_24_2017_07-46-00"
+}

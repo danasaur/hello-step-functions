@@ -1,0 +1,21 @@
+{
+  "Comment": "grabs data from an api and writes it to s3",
+  "StartAt": "GetData",
+  "States": {
+    "GetData": {
+      "Type": "Task",
+      "Resource": "${GetData}",
+      "Next": "ProcessData"
+    },
+    "ProcessData": {
+      "Type": "Task",
+      "Resource": "${ProcessData}",
+      "Next": "WriteToS3"
+    },
+    "WriteToS3": {
+      "Type": "Task",
+      "Resource": "${WriteData}",
+      "End": true
+    }
+  }
+}

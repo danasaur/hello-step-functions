@@ -1,0 +1,15 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: generate json string
+    command: "python -c \"import sys,json; f=open('state-machine.json', 'r'); sys.stdout.write( json.dumps( json.dumps(json.loads(f.read()))))\""
+    register: state_machine_text
+  - set_fact: 
+      state_machine_def: "{{ state_machine_text.stdout }}"
+  - template:
+      src: ./get-and-store-data-stack.json.j2
+      dest: ./get-and-store-data-stack.json
+  - cloudformation:
+      stack_name: Get-and-Store-Data
+      template: "get-and-store-data-stack.json"
+      region: "{{ region  |default('us-east-1') }}"

@@ -1,7 +1,6 @@
 """convert timezones and put into a dataframe"""
 from datetime import datetime, timedelta
 from dateutil import tz
-import pandas as pd
 
 
 def convert_time(time_string):
@@ -42,7 +41,6 @@ def process_data(event, context):
                  "sunrise": [sunrise],
                  "sunset": [sunset]}
 
-    
-    event['dataframe'] = dataframe
+    event['data_dict'] = data_dict
     event['time_now'] = time_now
     return event

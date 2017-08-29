@@ -16,15 +16,16 @@ def write_data_to_csv(event, context):
 
     # get the current time so we can save the document with a timestamp
     time_now = event['time_now']
+    filepath = "/tmp/{0}.csv".format(time_now)
     filename = "{0}.csv".format(time_now)
 
     # convert to a pandas dataframe
     dataframe = pd.DataFrame(data_dict)
-    dataframe.to_csv(filename, index=False)
+    dataframe.to_csv(filepath, index=False)
 
     # Upload a new file
     s3 = boto3.resource('s3')
-    data = open(filename, 'rb')
+    data = open(filepath, 'rb')
     s3.Bucket(s3_bucket_name).put_object(
         Key=filename,
         Body=data)
@@ -38,7 +39,7 @@ if __name__ == "__main__":
             'sunset': [5],
             'sunrise': [6]
             },
-        "time_now": "08_23_2017_14-26-00"
+        "time_now": "08_24_2017_07-46-00"
         }
     context = {}
 
